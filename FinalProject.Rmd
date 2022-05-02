@@ -1,0 +1,29 @@
+---
+title: "Untitled"
+author: "hcham"
+date: '2022-05-02'
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(here)
+library(tidycensus)
+library(readxl)
+
+```
+
+```{r}
+source(here::here("scripts", "get_data.R"))
+```
+```{r}
+housing <- read_csv(here::here("Data_Trans", "housing_data_joined.csv"))
+interest_rates <- read_csv(here::here("Data", "index.csv"))
+```
+
+
+
+
