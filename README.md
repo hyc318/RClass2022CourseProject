@@ -1,13 +1,17 @@
-#The Mother's Age and Birth Rates in the US
+# The Mother's Age and Birth Rates in the US
 
 The purpose of this exploration is to analyze the change in birth rates based on the average life expectancy and ethnicity of mothers. Do the trends that we see have anything to do with life expectancy of the mother and their ethnicity?
 
 Trends to be explored:
 
   Birth rates from 1989-2019
+  
   Birth rates based on the mother's age
+  
   Life expectancy of women
+  
   Birth rates based on the mother's ethnicity
+  
   Birth rates by age compared to life expectancy
 
 
