@@ -7,6 +7,8 @@ library(tidycensus)
 library(readxl)
 library(dplyr)
 library(janitor)
+library(knitr)
+
 # Output file names
 
 births <- read_csv(here::here("Data", "births_usafacts.csv"))

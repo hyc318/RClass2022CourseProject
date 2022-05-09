@@ -16,6 +16,9 @@ knitr::opts_chunk$set(fig.width = 9, fig.height = 3,5, fig.retina = 3,
 ```{r}
 install.packages("rlang")
 ```
+```{r}
+install.packages("knitr")
+```
 
 
 ```{r}
@@ -26,6 +29,7 @@ library(tidycensus)
 library(readxl)
 library(dplyr)
 library(janitor)
+library(knitr)
 
 ```
 
@@ -91,7 +95,10 @@ births_long <-
   mutate(Type = str_replace(string = Type,
                             pattern = "Births ",
                             replacement = "Total births"
-                            ))
+                            )) %>% 
+  mutate(Type = str_replace(string = Type,
+                            pattern = "Less than 15",
+                            replacement = "15 and younger"))
 ```
 
 
@@ -231,7 +238,7 @@ life_graph <- function(group) {
     ggplot(aes(x = Year, y = life_expectancy, color = Type_of_Women))+
     guides(color = guide_legend(title = group_name))+
     geom_point(scales = "free_x")+
-    ggtitle(str_c("Life", "expectancy", "of", group_name, sep = " "))+
+    ggtitle(str_c("Life", "expectancy", sep = " "))+
     theme_bw()+
     theme(plot.title = element_text(hjust = 0.5))
   
@@ -299,13 +306,21 @@ births_life_joined %>%
 ```{r}
 
 births_life_joined %>% 
-  select(c('Year', contains(c('1', '2', '3', '4')), 'Women (Age)')) %>% 
+  select(c('Year', contains(c('1', '2')), 'All Women (Age)')) %>% 
   pivot_longer(!Year, names_to = "Type", values_to = "births_age") %>% 
   ggplot(aes(x = Year, y = births_age, color = Type))+
   geom_point()+
   geom_smooth()+
-  facet_grid( Type ~ ., scales = "free_y")
+  facet_wrap( Type ~ ., scales = "free_y")
  
+
+births_life_joined %>% 
+  select(c('Year', contains(c('30','35', '40', '45')), 'All Women (Age)')) %>% 
+  pivot_longer(!Year, names_to = "Type", values_to = "births_age") %>% 
+  ggplot(aes(x = Year, y = births_age, color = Type))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap( Type ~ ., scales = "free_y")
 ```
 
 
