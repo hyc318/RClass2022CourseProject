@@ -5,25 +5,281 @@ date: '2022-05-02'
 output: html_document
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width = 9, fig.height = 3,5, fig.retina = 3,
+                      out.width = "100%",
+                      message = FALSE,
+                      warning = FALSE,
+                      fig.show = TRUE,
+                      echo = TRUE)
 ```
 
 ```{r}
+install.packages("rlang")
+```
+
+
+```{r}
+library(pacman)
 library(tidyverse)
 library(here)
 library(tidycensus)
 library(readxl)
+library(dplyr)
+library(janitor)
+
+```
+
+
+```{r}
+#source(here::here("scripts", "get_data.R"))
+```
+```{r}
+#housing <- read_csv(here::here("Data_Trans", "housing_data_joined.csv"))
+#interest_rates <- read_csv(here::here("Data", "index.csv"))
+```
+```{r}
+births <- read_csv(here::here("Data", "births_usafacts.csv"))
+net_worth <- read_csv(here::here("Data", "average_family_net_worth_usafacts.csv"))
+life_expect <- read_csv(here::here("Data", "life_expectancy_in_years_usafacts.csv"))
+```
+```{r}
+glimpse(net_worth)
+glimpse(births)
+glimpse(life_expect)
+```
+
+
+```{r}
+births_clean <-
+  births %>% 
+    slice(-c(2,4:55, 57:108, 110:161, 163:214, 216:267, 
+             269:320, 322:373, 375:427, 429:480, 482:533, 
+             535:586, 588:640, 643, 646:698, 700:751, 
+             753:805, 806:858, 860:911, 913:964, 966:1017, 
+             1019:1070, 1072:1176, 1178:1229, 
+             1231:1282, 1284:1391)) %>% 
+  select(-c('1980', '1981', '1982', '1983', '1984', '1985', '1986', '1987', '1988', '2020')) 
+```
+
+
+
+```{r}
+births_wide <-
+  births_clean %>%
+  pivot_longer(!Years, names_to = "year", values_to = "children_born") %>% 
+  rename(Type = Years, Year = year, Births = children_born) %>% 
+  select(Year, Births, Type) %>% 
+  mutate(Year = as.numeric(Year)) %>%
+  arrange(Year) %>%
+  mutate(Type = str_replace(string = Type,
+                            pattern = "\\(People\\)",
+                            replacement = "\\(Births)\\")) %>%
+  pivot_wider(names_from = Type, values_from = Births)
+
+```
+```{r}
+births_long <- 
+  births_clean %>%
+  
+  pivot_longer(!Years, names_to = "year", values_to = "children_born") %>% 
+  rename(Type = Years, Year = year, Births = children_born) %>% 
+  select(Year, Births, Type) %>% 
+  mutate(Year = as.numeric(Year)) %>% 
+  arrange(Year) %>%
+  mutate(Type = str_remove_all(string = Type,
+                               pattern = "\\(People\\)")) %>% 
+  mutate(Type = str_replace(string = Type,
+                            pattern = "Births ",
+                            replacement = "Total births"
+                            ))
+```
+
+
+```{r}
+total <- 'Total births'
+age <- c('Less than 15 ', '15-19 ', '20-24 ', '25-29 ', '30-34 ', '35-39 ', '40-45 ', '45 or older ')
+race <- c('White ', 'Black ', 'Asian or Pacific Islander ', 'American Indian or Alaska Native ')
+ethnicity <- c('Hispanic ', 'Non-Hispanic ', 'Non-Hispanic White ', 'Non-Hispanic Black ')
+marrital_status <- c('Married ', 'Unmarried ')
+education <- c('Doctorate or professional degree ', 'Master\'s degree ', 'Bachelor\'s degree  ', 'Associate degree ', 'Some college credit, but not a degree ', 'High school, no diploma ', '8th grade or less ', 'High school graduate or GED ')
 
 ```
 
 ```{r}
-source(here::here("scripts", "get_data.R"))
+birth_graph <- function(group) {
+ 
+  group_name <- rlang::as_name(rlang::enquo(group))
+  group_name <- str_to_title(group_name)
+  group_name <- str_replace_all(group_name, "_", " ")
+  
+  births_long %>% 
+    filter(Type %in% group) %>%
+    ggplot(aes(x = Year, y = Births, color = Type))+
+    guides(color = guide_legend(title = group_name))+
+    geom_point(scales = "free")#+
+    #theme(axis.text.x = element_text(angle = 90))
+}
+
+```
+
+```{r}
+birth_graph(race)
+birth_graph(age)
+birth_graph(ethnicity)
+birth_graph(marrital_status)
+birth_graph(education)
+birth_graph(total)
+```
+
+
+```{r}
+net_worth_long <- 
+  net_worth %>% 
+  mutate_at(c('1989', '1990', '1991', '1992', '1993', '1994', '1995', '1996', '1997', '1999', '2000', '2002', '2003', '2005', '2006', '2008', '2009', '2011', '2012', '2014', '2015', '2017', '2018'), as.double) %>% 
+  slice(-c(2, 9, 16, 21, 26, 31:36)) %>% 
+  pivot_longer(!Years, names_to = "year", values_to = "Net_Worth") %>% 
+  rename(Type_family = Years, Year = year) %>% 
+  mutate(Year = as.numeric(Year)) %>% 
+  select(Year, Net_Worth, Type_family) %>% 
+  arrange(Year) #%>%
+  #mutate(Type_family = str_remove_all(string = Type_family,
+                               #pattern = "\\(\\$\\)"))
+  
+```
+
+
+
+```{r}
+net_worth_wide <- 
+  net_worth %>% 
+  mutate_at(c('1989', '1990', '1991', '1992', '1993', '1994', '1995', '1996', '1997', '1999', '2000', '2002', '2003', '2005', '2006', '2008', '2009', '2011', '2012', '2014', '2015', '2017', '2018'), as.double) %>% 
+  slice(-c(2, 9, 16, 21, 26, 31:36)) %>% 
+  pivot_longer(!Years, names_to = "year", values_to = "Net_Worth") %>% 
+  rename(Type_family = Years, Year = year) %>% 
+  mutate(Year = as.numeric(Year)) %>% 
+  select(Year, Net_Worth, Type_family) %>% 
+  arrange(Year) %>%
+  pivot_wider(names_from = Type_family, values_from = Net_Worth) %>% 
+  clean_names() %>% 
+  rename(Year = year)
+
+```
+
+```{r}
+net_worth_long %>% 
+  ggplot(aes())
+```
+
+
+```{r}
+glimpse(life_expect)
+```
+
+#mutate_at(c('1980', '1981', '1982', '1983', '1984', '1985', '1986'), as.double)%>%
+```{r}
+types_of_women <- c("Women (Age)", "White Women (Age)", "Black Women (Age)", "Hispanic Women (Age)", "White non Hispanic Women (Age)", "Black non Hispanic Women (Age)")
+
+life_double <-
+  life_expect %>% 
+  select(-c('1980', '1981', '1982', '1983', '1984', '1985', '1986', '1987', '1988', '2020')) %>% 
+  slice(-c(26:33)) %>% 
+  filter(!Years %in% c('Men (Years)', 'By gender', 'By race and ethnicity')) %>% 
+  slice(-c(1, 3, 5, 7, 9, 11)) %>% 
+  mutate(Type_of_Women = types_of_women) %>% 
+  select(-Years)
+
+```
+
+```{r}
+life_long <- 
+  life_double  %>% 
+  pivot_longer(!Type_of_Women, names_to = "year", values_to = "life_expectancy") %>% 
+  rename(Year = year) %>% 
+  mutate(Year = as.numeric(Year)) %>% 
+  select(Year, life_expectancy, Type_of_Women) %>% 
+  arrange(Year)
+ 
+```
+
+```{r}
+life_wide <- 
+  life_double  %>% 
+  pivot_longer(!Type_of_Women, names_to = "year", values_to = "life_expectancy") %>% 
+  rename(Year = year) %>% 
+  mutate(Year = as.numeric(Year)) %>% 
+  select(Year, life_expectancy, Type_of_Women) %>% 
+  arrange(Year) %>% 
+  pivot_wider(names_from = Type_of_Women, values_from = life_expectancy)
+```
+
+```{r}
+births_net_joined <- 
+  births_wide %>% 
+  inner_join(net_worth_wide, by = "Year")
+
+```
+
+
+
+```{r}
+births_net_life_joined <-
+  births_net_joined %>% 
+    inner_join(life_wide, by = "Year")
+```
+
+```{r}
+births_life_joined <- 
+  births_wide %>% 
+  inner_join(life_wide, by = "Year")
+
+
 ```
 ```{r}
-housing <- read_csv(here::here("Data_Trans", "housing_data_joined.csv"))
-interest_rates <- read_csv(here::here("Data", "index.csv"))
+
+births_life_joined %>% 
+  select(c('Year', contains(c('1', '2', '3', '4')), 'Women (Age)')) %>% 
+  pivot_longer(!Year, names_to = "Type", values_to = "births_age") %>% 
+  ggplot(aes(x = Year, y = births_age, color = Type))+
+  geom_point()+
+  geom_smooth()+
+  facet_grid( Type ~ ., scales = "free_y")
+ 
+```
+
+
+```{r}
+
+births_life_joined %>% 
+  select(c('Year', 'Hispanic (Births)', 'Hispanic Women (Age)')) %>% 
+  pivot_longer(!Year, names_to = "Type", values_to = "births_age") %>% 
+  ggplot(aes(x = Year, y = births_age, color = Type))+
+  geom_point()+
+  geom_smooth()+
+  facet_grid( Type ~ ., scales = "free_y")
+ 
+```
+
+```{r}
+
+births_life_joined %>% 
+  select(c('Year', 'White (Births)', 'White Women (Age)', 'Non-Hispanic White (Births)', 'White non Hispanic Women (Age)')) %>% 
+  pivot_longer(!Year, names_to = "Type", values_to = "births_age") %>% 
+  ggplot(aes(x = Year, y = births_age, color = Type))+
+  geom_point()+
+  geom_smooth()+
+  facet_grid( Type ~ ., scales = "free_y")
+ 
 ```
 
 
 
+```{r}
+births_life_joined %>% 
+  select(c('Year', 'Black (Births)', 'Non-Hispanic Black (Births)', 'Black Women (Age)', 'Black non Hispanic Women (Age)')) %>% 
+  pivot_longer(!Year, names_to = "Type", values_to = "births_age") %>% 
+  ggplot(aes(x = Year, y = births_age, color = Type))+
+  geom_point()+
+  facet_grid( Type ~ ., scales = "free_y")
+ 
+```
 
