@@ -116,8 +116,12 @@ birth_graph <- function(group) {
     filter(Type %in% group) %>%
     ggplot(aes(x = Year, y = Births, color = Type))+
     guides(color = guide_legend(title = group_name))+
-    geom_point(scales = "free")#+
-    #theme(axis.text.x = element_text(angle = 90))
+    geom_point(scales = "free_x")+
+    ggtitle(str_c("Mother's", group_name, sep = " "))+
+    theme_bw()+
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  
 }
 
 ```
@@ -177,7 +181,7 @@ glimpse(life_expect)
 
 #mutate_at(c('1980', '1981', '1982', '1983', '1984', '1985', '1986'), as.double)%>%
 ```{r}
-types_of_women <- c("Women (Age)", "White Women (Age)", "Black Women (Age)", "Hispanic Women (Age)", "White non Hispanic Women (Age)", "Black non Hispanic Women (Age)")
+types_of_women <- c("All Women (Age)", "White Women (Age)", "Black Women (Age)", "Hispanic Women (Age)", "White non Hispanic Women (Age)", "Black non Hispanic Women (Age)")
 
 life_double <-
   life_expect %>% 
@@ -197,9 +201,55 @@ life_long <-
   rename(Year = year) %>% 
   mutate(Year = as.numeric(Year)) %>% 
   select(Year, life_expectancy, Type_of_Women) %>% 
-  arrange(Year)
+  arrange(Year) %>% 
+  mutate(Type_of_Women = str_remove_all(string = Type_of_Women,
+                               pattern = "\\(Age\\)"))
+  
  
 ```
+```{r}
+race_and_ethnicity <- c('All Women ', 'White Women ', 'Black Women ', 'Hispanic Women ', 'White non Hispanic Women ', 'Black non Hispanic Women ')
+white_women <- 'White Women '
+black_women<- 'Black Women '
+hispanic_women <- 'Hispanic Women '
+white_non_Hispanic_women <- 'White non Hispanic Women '
+black_non_Hispanic_women <- 'Black non Hispanic Women '
+
+```
+
+
+
+```{r}
+life_graph <- function(group) {
+ 
+  group_name <- rlang::as_name(rlang::enquo(group))
+  group_name <- str_to_title(group_name)
+  group_name <- str_replace_all(group_name, "_", " ")
+  
+  life_long %>% 
+    filter(Type_of_Women %in% group) %>%
+    ggplot(aes(x = Year, y = life_expectancy, color = Type_of_Women))+
+    guides(color = guide_legend(title = group_name))+
+    geom_point(scales = "free_x")+
+    ggtitle(str_c("Life", "expectancy", "of", group_name, sep = " "))+
+    theme_bw()+
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  
+}
+
+```
+
+```{r}
+life_graph(race_and_ethnicity)
+life_graph(white_women)
+life_graph(black_women)
+life_graph(hispanic_women)
+life_graph(white_non_Hispanic_women)
+life_graph(black_non_Hispanic_women)
+
+```
+
 
 ```{r}
 life_wide <- 
@@ -234,6 +284,18 @@ births_life_joined <-
 
 
 ```
+```{r}
+
+births_life_joined %>% 
+  select(c('Year', contains(c('1', '2', '3', '4')))) %>% 
+  pivot_longer(!Year, names_to = "Type", values_to = "births_age") %>% 
+  ggplot(aes(x = Year, y = births_age, color = Type))+
+  geom_point()+
+  geom_smooth()
+ 
+ 
+```
+
 ```{r}
 
 births_life_joined %>% 

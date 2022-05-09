@@ -1,0 +1,12 @@
+---
+title: "The Mother's Age and Birth Rates in the US"
+author: "Helen Chamley"
+date: '2022-05-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
